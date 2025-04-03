@@ -39,10 +39,9 @@
         function fetchRegistro() {
             document.getElementById('status').innerHTML = "Obteniendo datos...";
             
-            // Usar credenciales codificadas para este ejemplo (admin:123)
             fetch('/registro', {
                 headers: {
-                    'Authorization': 'Basic YWRtaW46MTIz'  // admin:123 en Base64
+                    'Authorization': 'Basic ' + btoa('yesid:yesid')
                 }
             })
             .then(response => {
