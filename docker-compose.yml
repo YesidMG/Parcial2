@@ -1,0 +1,59 @@
+services:
+  traefik:
+    image: traefik:v2.10
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      - "traefik.http.routers.traefik.rule=Host(`localhost`) && PathPrefix(`/dashboard`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.middlewares.strip-dashboard.stripPrefix.prefixes=/dashboard"
+      - "traefik.http.routers.traefik.middlewares=strip-dashboard"
+
+  registro-app:
+    build:
+      context: ./registro-app
+    labels:
+      - "traefik.http.routers.registro.rule=Host(`localhost`) && PathPrefix(`/registro`)"
+      - "traefik.http.routers.registro.entrypoints=web"
+      - "traefik.http.routers.registro.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=yesid:$2a$12$0dfI7dFUUZH.XNwhsu3GRO6i9ODYwKVjMasCzt1S6r8J9ViFLyZkq"
+      - "traefik.http.services.registro.loadbalancer.server.port=5000"
+
+  cliente-1:
+    build:
+      context: ./cliente-app
+    environment:
+      - SERVICE_ID=1
+    labels:
+      - "traefik.http.routers.1.rule=Host(`localhost`) && PathPrefix(`/cliente/1`)"
+      - "traefik.http.middlewares.strip-1.stripPrefix.prefixes=/cliente/1"
+      - "traefik.http.routers.1.middlewares=strip-1"
+      - "traefik.http.services.1.loadbalancer.server.port=5000"
+
+  cliente-2:
+    build:
+      context: ./cliente-app
+    environment:
+      - SERVICE_ID=2
+    labels:
+      - "traefik.http.routers.2.rule=Host(`localhost`) && PathPrefix(`/cliente/2`)"
+      - "traefik.http.middlewares.strip-2.stripPrefix.prefixes=/cliente/2"
+      - "traefik.http.routers.2.middlewares=strip-2"
+      - "traefik.http.services.2.loadbalancer.server.port=5000"
+  panel:
+    build:
+      context: ./panel
+    labels:
+      - "traefik.http.routers.panel.rule=Host(`localhost`) && PathPrefix(`/panel`)"
+      - "traefik.http.routers.panel.entrypoints=web"
+      - "traefik.http.middlewares.strip-panel.stripPrefix.prefixes=/panel"
+      - "traefik.http.routers.panel.middlewares=strip-panel"
+      - "traefik.http.services.panel.loadbalancer.server.port=80"
+
